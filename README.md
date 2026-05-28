@@ -1,88 +1,86 @@
-<img align="right" width="350px" style="margin-top:-20px" src="https://raw.githubusercontent.com/codofonia/codofonia/refs/heads/main/codofonia.png">
+<p align="center">
+  <img src="https://raw.githubusercontent.com/codofonia/codofonia/refs/heads/main/codofonia.png" width="320"/>
+</p>
 
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
+<h1 align="center">CODOFONIA</h1>
 
-<div display="inline-block">
-  <h1 align="left">CODOFONIA</h1>
-</div>
+<p align="center">
+  <strong>Cultura sonora open-source</strong>
+</p>
 
-### Cultura sonora open-source
+<p align="center">
+  um movimento cultural onde código vira música,
+  terminal vira instrumento
+  e som vira linguagem livre.
+</p>
+
+---
+
+## Sobre
 
 Codofonia é um espaço aberto para criar música com código.
 
-Um laboratório de som, programação e remix livre.
+Um laboratório de som, programação, remix e experimentação sonora.
 
-Onde terminal vira instrumento.  
-Onde código vira ritmo.  
-Onde qualquer áudio pode se transformar em música.
+Um ponto de encontro entre:
 
----
-
-Criamos usando:
-
-- Python
-- áudio
-- samples
-- loops
-- beats
-- remix
+- música eletrônica
 - live coding
-- experimentação sonora
+- áudio digital
 - cultura hacker
 - software livre
+- DIY
+- arte experimental
+- remix livre
 
 ---
 
-## Manifesto
+## 🖥️ Ferramentas
 
-Acreditamos que música também pode nascer do código.
+<p>
+  <img width="40px" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" />
+  <img width="40px" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg" />
+  <img width="40px" src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/ffmpeg.svg" />
+  <img width="40px" src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/github.svg" />
+</p>
+
+---
+
+# Manifesto
+
+Acreditamos que música também nasce do código.
 
 Que programação também é instrumento.
 
-Que o terminal também pode ser estúdio.
+Que terminal também é estúdio.
 
 Que erro também pode virar textura.
+
+Que ruído também pode virar linguagem.
 
 Que remix também é composição.
 
 Que compartilhar também é criar.
 
+Que código aberto também produz cultura.
+
 ---
 
-## Filosofia
+# Filosofia
 
 - open-source
+- cultura livre
 - DIY
 - remix livre
-- cultura hacker
-- experimentação
+- experimentação sonora
+- tecnologia acessível
 - comunidade
+- colaboração
 - som sem fronteira
 
 ---
 
-## Ferramentas
-
-### 🖥️ Stack
-
-<code><img width="40px" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" title="Python"/></code>
-<code><img width="40px" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg" title="Linux"/></code>
-<code><img width="40px" src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/ffmpeg.svg" title="FFmpeg"/></code>
-<code><img width="40px" src="https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/github.svg" title="GitHub"/></code>
-
----
-
-## Participar
+# Participar
 
 Você pode participar:
 
@@ -91,24 +89,23 @@ Você pode participar:
 - remixando sons
 - publicando beats
 - criando loops
+- explorando áudio com programação
 - colaborando com código
 - ensinando outras pessoas
 
 ---
 
-## Links
+# Links
 
-### 📫
-
-Instagram  
+### Instagram
 https://instagram.com/codofonia
 
-GitHub  
+### GitHub
 https://github.com/codofonia
 
 ---
 
-## License
+# License
 
 CC0 1.0 Universal
 
@@ -117,10 +114,6 @@ Todo conteúdo deste repositório pode ser usado, copiado, remixado e transforma
 ---
 
 <p align="center">
-  <img src="./logobanner.png" width="350">
+  O código está aberto.<br/>
+  O som está esperando.
 </p>
-
----
-
-> O código está aberto.  
-> O som está esperando.
