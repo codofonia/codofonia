@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CODOFONIA — Cultura Sonora Open-Source</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@700;900&family=VT323&display=swap');
+
+  :root {
+    --green: #00ff41;
+    --green-dim: #00c030;
+    --green-dark: #003a10;
+    --green-glow: rgba(0, 255, 65, 0.15);
+    --green-glow-strong: rgba(0, 255, 65, 0.35);
+    --black: #000000;
+    --white: #f0f0f0;
+    --mono: 'Share Tech Mono', monospace;
+    --display: 'Barlow Condensed', sans-serif;
+    --vt: 'VT323', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--green);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.5;
+  }
+
+  /* ── CRT SCANLINES ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0, 0, 0, 0.18) 2px,
+      rgba(0, 0, 0, 0.18) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── PHOSPHOR VIGNETTE ── */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 55%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+    pointer-events: none;
+    z-index: 9997;
+  }
+
+  /* ── GRID OVERLAY ── */
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,65,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,65,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 9996;
+  }
+
+  /* ── HORIZONTAL SEPARATOR ── */
+  .h-rule {
+    border: none;
+    border-top: 1px solid var(--green-dim);
+    opacity: 0.3;
+    margin: 0;
+  }
+
+  /* ── HEADER BAR ── */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 24px;
+    border-bottom: 1px solid rgba(0,255,65,0.2);
+    background: rgba(0,0,0,0.85);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--green-dim);
+  }
+
+  .topbar-left { display: flex; gap: 18px; }
+  .topbar-sig { color: var(--green); animation: blink-text 3s infinite; }
+  @keyframes blink-text { 0%,49%{opacity:1} 50%,100%{opacity:0.4} }
+
+  .status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    margin-right: 6px;
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100%{ box-shadow: 0 0 6px var(--green); }
+    50%{ box-shadow: 0 0 14px var(--green), 0 0 28px rgba(0,255,65,0.4); }
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 100px 6vw 60px;
+    position: relative;
+  }
+
+  /* oscilloscope canvas behind hero */
+  #osc-canvas {
+    position: absolute;
+    right: 0; bottom: 0;
+    width: 55vw;
+    height: 70vh;
+    opacity: 0.13;
+    pointer-events: none;
+  }
+
+  /* ── LOGO MARK ── */
+  .logo-mark {
+    font-family: var(--mono);
+    font-size: clamp(9px, 1.2vw, 13px);
+    color: var(--green-dim);
+    letter-spacing: 0.15em;
+    margin-bottom: 28px;
+    line-height: 1.6;
+    opacity: 0.7;
+  }
+  .logo-mark .bracket { color: var(--green); font-size: 1.2em; }
+
+  /* ── MAIN TITLE ── */
+  .main-title {
+    font-family: var(--display);
+    font-weight: 900;
+    font-size: clamp(72px, 14vw, 200px);
+    line-height: 0.88;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--green);
+    text-shadow:
+      0 0 20px rgba(0,255,65,0.6),
+      0 0 60px rgba(0,255,65,0.25),
+      0 0 120px rgba(0,255,65,0.1);
+    position: relative;
+    user-select: none;
+  }
+
+  .main-title:hover {
+    animation: glitch 0.25s steps(2) forwards;
+  }
+
+  @keyframes glitch {
+    0%   { transform: translate(0); clip-path: none; }
+    20%  { transform: translate(-3px, 2px); color: #fff; text-shadow: 2px 0 var(--green), -2px 0 #0ff; }
+    40%  { transform: translate(3px, -2px); clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%); }
+    60%  { transform: translate(-2px, 1px); }
+    80%  { transform: translate(2px, -1px); }
+    100% { transform: translate(0); clip-path: none; }
+  }
+
+  /* ── SUBTITLE ── */
+  .subtitle {
+    font-family: var(--vt);
+    font-size: clamp(18px, 3vw, 36px);
+    color: var(--white);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-top: 10px;
+    opacity: 0.75;
+  }
+
+  /* ── MANIFESTO ── */
+  .manifesto {
+    margin-top: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 560px;
+  }
+
+  .manifesto-line {
+    font-family: var(--mono);
+    font-size: clamp(13px, 1.8vw, 18px);
+    color: var(--green-dim);
+    letter-spacing: 0.05em;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0,255,65,0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: color 0.2s, padding-left 0.2s;
+  }
+
+  .manifesto-line:first-child { border-top: 1px solid rgba(0,255,65,0.1); }
+
+  .manifesto-line:hover {
+    color: var(--green);
+    padding-left: 12px;
+    text-shadow: 0 0 10px rgba(0,255,65,0.5);
+  }
+
+  .manifesto-line .prompt {
+    color: rgba(0,255,65,0.3);
+    font-size: 0.85em;
+    flex-shrink: 0;
+  }
+
+  /* ── CTA ── */
+  .cta-wrap {
+    margin-top: 56px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .cta-btn {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: clamp(13px, 1.5vw, 16px);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--black);
+    background: var(--green);
+    padding: 14px 36px;
+    border: 2px solid var(--green);
+    box-shadow: 0 0 20px rgba(0,255,65,0.4), inset 0 0 20px rgba(0,255,65,0.1);
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  }
+
+  .cta-btn:hover {
+    background: var(--black);
+    color: var(--green);
+    box-shadow: 0 0 40px rgba(0,255,65,0.7), 0 0 80px rgba(0,255,65,0.3);
+    transform: translate(-2px, -2px);
+  }
+
+  .cta-btn:active { transform: translate(0); }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 10px; height: 1.1em;
+    background: var(--green);
+    margin-left: 4px;
+    vertical-align: text-bottom;
+    animation: cursor-flash 1s step-end infinite;
+  }
+  @keyframes cursor-flash { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* ── DIVIDER SECTION ── */
+  .section-divider {
+    padding: 0 6vw;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 0;
+  }
+  .section-divider .label {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: rgba(0,255,65,0.3);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .section-divider .line {
+    flex: 1;
+    height: 1px;
+    background: rgba(0,255,65,0.15);
+  }
+
+  /* ── INFO GRID ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid rgba(0,255,65,0.15);
+    border-left: 1px solid rgba(0,255,65,0.15);
+    margin: 0 6vw;
+  }
+
+  .info-cell {
+    border-right: 1px solid rgba(0,255,65,0.15);
+    border-bottom: 1px solid rgba(0,255,65,0.15);
+    padding: 28px 24px;
+    transition: background 0.2s;
+  }
+
+  .info-cell:hover {
+    background: rgba(0,255,65,0.04);
+  }
+
+  .info-cell .cell-label {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: rgba(0,255,65,0.35);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .info-cell .cell-value {
+    font-family: var(--vt);
+    font-size: clamp(20px, 2.5vw, 28px);
+    color: var(--green);
+    line-height: 1.1;
+  }
+
+  /* ── WAVEFORM SECTION ── */
+  .wave-section {
+    padding: 40px 6vw;
+    position: relative;
+  }
+
+  #wave-canvas {
+    width: 100%;
+    height: 120px;
+    display: block;
+    opacity: 0.7;
+  }
+
+  /* ── TERMINAL BLOCK ── */
+  .terminal-section {
+    padding: 40px 6vw 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+
+  .terminal-box {
+    border: 1px solid rgba(0,255,65,0.2);
+    background: rgba(0,255,65,0.02);
+    padding: 20px;
+    font-size: clamp(11px, 1.2vw, 13px);
+    line-height: 1.9;
+    position: relative;
+  }
+
+  .terminal-box::before {
+    content: attr(data-title);
+    position: absolute;
+    top: -10px; left: 16px;
+    background: var(--black);
+    padding: 0 8px;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: rgba(0,255,65,0.5);
+    text-transform: uppercase;
+  }
+
+  .t-cmd { color: var(--green); }
+  .t-out { color: rgba(0,255,65,0.5); }
+  .t-comment { color: rgba(0,255,65,0.25); }
+  .t-err { color: #ff4444; }
+  .t-accent { color: var(--white); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid rgba(0,255,65,0.2);
+    padding: 28px 6vw;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .footer-sig {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: rgba(0,255,65,0.3);
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .footer-link {
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--green-dim);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: color 0.15s, text-shadow 0.15s;
+  }
+
+  .footer-link:hover {
+    color: var(--green);
+    text-shadow: 0 0 10px rgba(0,255,65,0.6);
+  }
+
+  .footer-link svg {
+    width: 14px; height: 14px;
+    fill: currentColor;
+  }
+
+  /* ── GLITCH STRIPE ── */
+  .glitch-stripe {
+    overflow: hidden;
+    height: 32px;
+    background: var(--green-dark);
+    border-top: 1px solid rgba(0,255,65,0.2);
+    border-bottom: 1px solid rgba(0,255,65,0.2);
+    display: flex;
+    align-items: center;
+  }
+
+  .glitch-ticker {
+    display: flex;
+    gap: 60px;
+    white-space: nowrap;
+    animation: ticker 22s linear infinite;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: rgba(0,255,65,0.55);
+    text-transform: uppercase;
+  }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .topbar-left { display: none; }
+
+    #osc-canvas { width: 100vw; height: 40vh; opacity: 0.08; left: 0; }
+
+    .info-grid { grid-template-columns: 1fr 1fr; }
+    .info-cell:last-child { grid-column: span 2; }
+
+    .terminal-section { grid-template-columns: 1fr; }
+
+    .main-title { line-height: 0.85; }
+  }
+
+  @media (max-width: 480px) {
+    .info-grid { grid-template-columns: 1fr; }
+    .info-cell:last-child { grid-column: auto; }
+    .footer { flex-direction: column; }
+  }
+
+  /* ── SCROLL FADE IN ── */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="vignette"></div>
+<div class="grid-overlay"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-sig">CDFS://v0.1.0</span>
+    <span>BR · OSS</span>
+    <span>ROOT@CODOFONIA</span>
+  </div>
+  <div>
+    <span class="status-dot"></span>
+    <span>ONLINE</span>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <canvas id="osc-canvas"></canvas>
+
+  <div class="logo-mark">
+    <span class="bracket">[</span>&nbsp;CDFS://ROOT/&nbsp;<span class="bracket">]</span><br>
+    ██▓▓░░ SISTEMA ATIVO ░░▓▓██
+  </div>
+
+  <h1 class="main-title">CODO<br>FONIA</h1>
+
+  <p class="subtitle">Cultura sonora open-source<span class="cursor-blink"></span></p>
+
+  <div class="manifesto">
+    <div class="manifesto-line">
+      <span class="prompt">01://</span>
+      código como instrumento
+    </div>
+    <div class="manifesto-line">
+      <span class="prompt">02://</span>
+      som como linguagem
+    </div>
+    <div class="manifesto-line">
+      <span class="prompt">03://</span>
+      ruído como matéria-prima
+    </div>
+    <div class="manifesto-line">
+      <span class="prompt">04://</span>
+      erro como textura
+    </div>
+    <div class="manifesto-line">
+      <span class="prompt">05://</span>
+      remix como expressão
+    </div>
+  </div>
+
+  <div class="cta-wrap">
+    <a class="cta-btn" href="https://github.com/codofonia" target="_blank" rel="noopener">
+      &gt; ENTER CODOFONIA
+    </a>
+  </div>
+</section>
+
+<!-- GLITCH TICKER -->
+<div class="glitch-stripe">
+  <div class="glitch-ticker">
+    <span>LIVE CODING</span><span>AUDIO HACKING</span><span>OPEN SOURCE</span><span>SONIC CULTURE</span><span>EXPERIMENTAL MUSIC</span><span>REMIX CULTURE</span><span>RUÍDO &amp; FORMA</span><span>BRASIL</span>
+    <span>LIVE CODING</span><span>AUDIO HACKING</span><span>OPEN SOURCE</span><span>SONIC CULTURE</span><span>EXPERIMENTAL MUSIC</span><span>REMIX CULTURE</span><span>RUÍDO &amp; FORMA</span><span>BRASIL</span>
+  </div>
+</div>
+
+<!-- INFO GRID -->
+<div class="info-grid fade-in" style="margin-top:60px">
+  <div class="info-cell">
+    <div class="cell-label">Domínio</div>
+    <div class="cell-value">SONIC<br>CULTURE</div>
+  </div>
+  <div class="info-cell">
+    <div class="cell-label">Licença</div>
+    <div class="cell-value">OPEN<br>SOURCE</div>
+  </div>
+  <div class="info-cell">
+    <div class="cell-label">Origem</div>
+    <div class="cell-value">BRASIL<br>∞ WWW</div>
+  </div>
+  <div class="info-cell">
+    <div class="cell-label">Método</div>
+    <div class="cell-value">LIVE<br>CODING</div>
+  </div>
+  <div class="info-cell">
+    <div class="cell-label">Material</div>
+    <div class="cell-value">RUÍDO<br>&amp; ERRO</div>
+  </div>
+  <div class="info-cell">
+    <div class="cell-label">Forma</div>
+    <div class="cell-value">HACK<br>ART</div>
+  </div>
+</div>
+
+<!-- WAVEFORM -->
+<div class="wave-section" style="margin-top:60px">
+  <div class="section-divider" style="margin:0 0 24px;">
+    <span class="label">SIG // Waveform Output</span>
+    <div class="line"></div>
+  </div>
+  <canvas id="wave-canvas" height="120"></canvas>
+</div>
+
+<!-- TERMINAL BLOCKS -->
+<div class="terminal-section fade-in">
+  <div class="terminal-box" data-title="// SOBRE">
+    <div class="t-comment"># codofonia — projeto de cultura sonora</div>
+    <br>
+    <div class="t-cmd">$ cat README.md</div>
+    <div class="t-out">──────────────────────────</div>
+    <div class="t-accent">Codofonia é um projeto brasileiro</div>
+    <div class="t-accent">open-source dedicado à música feita</div>
+    <div class="t-accent">com código, experimentação sonora,</div>
+    <div class="t-accent">cultura do remix e hacker aesthetics.</div>
+    <br>
+    <div class="t-out">Reunimos ferramentas, práticas</div>
+    <div class="t-out">e comunidade ao redor do som</div>
+    <div class="t-out">como linguagem computacional.</div>
+    <br>
+    <div class="t-cmd">$ _</div>
+  </div>
+
+  <div class="terminal-box" data-title="// STACK">
+    <div class="t-comment"># ferramentas e linguagens</div>
+    <br>
+    <div class="t-cmd">$ ls ./instruments/</div>
+    <div class="t-out">──────────────────────────</div>
+    <div class="t-out">SuperCollider/</div>
+    <div class="t-out">TidalCycles/</div>
+    <div class="t-out">Pure_Data/</div>
+    <div class="t-out">Max_MSP/</div>
+    <div class="t-out">ChucK/</div>
+    <div class="t-out">Sonic_Pi/</div>
+    <div class="t-out">WebAudio_API/</div>
+    <div class="t-out">MIDI_Hacks/</div>
+    <div class="t-out">...</div>
+    <br>
+    <div class="t-err">WARNING: noise may exceed expectations</div>
+    <div class="t-cmd">$ _</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-sig">
+    CODOFONIA © 2024 · TODOS OS SONS LIBERADOS · GPL-3.0
+  </div>
+  <div class="footer-links">
+    <a class="footer-link" href="https://instagram.com/codofonia" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      Instagram
+    </a>
+    <a class="footer-link" href="https://github.com/codofonia" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+      GitHub
+    </a>
+  </div>
+</footer>
+
+<script>
+// ── OSCILLOSCOPE (hero bg) ──
+(function() {
+  const canvas = document.getElementById('osc-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, h, t = 0;
+
+  function resize() {
+    w = canvas.offsetWidth; h = canvas.offsetHeight;
+    canvas.width = w; canvas.height = h;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#00ff41';
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = '#00ff41';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    for (let x = 0; x < w; x++) {
+      const freq1 = 0.012, freq2 = 0.007, freq3 = 0.02;
+      const y = h / 2
+        + Math.sin(x * freq1 + t * 1.1) * h * 0.22
+        + Math.sin(x * freq2 + t * 0.7) * h * 0.12
+        + Math.sin(x * freq3 + t * 1.8) * h * 0.06;
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // second harmonic
+    ctx.globalAlpha = 0.3;
+    ctx.beginPath();
+    for (let x = 0; x < w; x++) {
+      const y = h / 2
+        + Math.sin(x * 0.009 + t * 0.5 + 1.2) * h * 0.18
+        + Math.cos(x * 0.018 + t * 1.3) * h * 0.09;
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    t += 0.018;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── WAVEFORM (static-style) ──
+(function() {
+  const canvas = document.getElementById('wave-canvas');
+  const ctx = canvas.getContext('2d');
+  let w, t = 0;
+
+  function resize() {
+    w = canvas.offsetWidth;
+    canvas.width = w;
+    canvas.height = 120;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function draw() {
+    ctx.clearRect(0, 0, w, 120);
+
+    // draw bars
+    const barW = 3, gap = 2, total = barW + gap;
+    const count = Math.floor(w / total);
+
+    for (let i = 0; i < count; i++) {
+      const x = i * total;
+      const amp = (
+        Math.sin(i * 0.18 + t) * 0.4
+        + Math.sin(i * 0.07 + t * 0.6) * 0.3
+        + Math.sin(i * 0.33 + t * 1.4) * 0.15
+        + Math.random() * 0.15
+      );
+      const h = Math.max(4, Math.abs(amp) * 95);
+      const y = (120 - h) / 2;
+
+      const alpha = 0.4 + Math.abs(amp) * 0.6;
+      ctx.fillStyle = `rgba(0,255,65,${alpha})`;
+      ctx.fillRect(x, y, barW, h);
+    }
+
+    t += 0.03;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── SCROLL FADE-IN ──
+(function() {
+  const els = document.querySelectorAll('.fade-in');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(el => io.observe(el));
+})();
+
+// ── TITLE GLITCH INTERVAL ──
+(function() {
+  const title = document.querySelector('.main-title');
+  const original = title.textContent;
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@$%&!';
+
+  function glitchText() {
+    let iterations = 0;
+    const interval = setInterval(() => {
+      title.textContent = original.split('').map((char, i) => {
+        if (char === '\n' || char === ' ') return char;
+        if (i < iterations) return original[i];
+        return chars[Math.floor(Math.random() * chars.length)];
+      }).join('');
+      iterations += 1.5;
+      if (iterations >= original.length) {
+        title.textContent = original;
+        clearInterval(interval);
+      }
+    }, 40);
+  }
+
+  setInterval(glitchText, 7000);
+})();
+</script>
+</body>
+</html>
